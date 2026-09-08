@@ -8,14 +8,36 @@ def fetch_feed():
     feed = feedparser.parse(FEED_URL)
     return feed.entries
 
+def extract_metadata(entry):
+    """Poimii dc_identifier, ISIN ja tickerin yhdestä RSS-itemistä."""
+
+    isin = None
+    ticker = None
+    for tag in entry.get("tags", []):
+        if tag.get("scheme") == "https://www.globenewswire.com/rss/ISIN":
+            isin = tag["term"]
+        if tag.get("scheme") == "https://www.globenewswire.com/rss/stock":
+            ticker = tag["term"]
+
+    return {
+        "external_id": entry.get("dc_identifier"),
+        "title": entry.title,
+        "summary": entry.summary,
+        "link": entry.link,
+        "language": entry.get("language"),
+        "isin": isin,
+        "ticker": ticker,
+        "published": entry.published,
+    }
+
 
 if __name__ == "__main__":
     entries = fetch_feed()
-    print(f"Löytyi {len(entries)} tiedostetta syötteestä.")
+ 
+ # Tutki vain suomenkieliset, joissa löytyy ISIN
 
     for entry in entries:
-        print(f"Otsikko: {entry.title}")
-        print(f"Julkaistu: {entry.published}")
-        print(f"Linkki: {entry.link}")
-        print(f"Kentät saatavilla: {list(entry.keys())}")
-        print("---")
+        data = extract_metadata(entry)
+        if data["language"] == "fi" and data["isin"]:
+            print(data)
+            print("---")
