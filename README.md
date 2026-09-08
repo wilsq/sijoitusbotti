@@ -1,11 +1,11 @@
-Missä ollaan nyt
+## Missä ollaan nyt
 
-✅ Tietokanta pystyssä ja yhdistettävissä
-✅ RSS-haku toimii ja tuottaa jäsenneltyä dataa
-✅ Watchlist-suodatus ISIN:llä toimii
-✅ Tallennus + dedupe toimii todistetusti
+✅ Tietokanta pystyssä ja yhdistettävissä<br/>
+✅ RSS-haku toimii ja tuottaa jäsenneltyä dataa<br/>
+✅ Watchlist-suodatus ISIN:llä toimii<br/>
+✅ Tallennus + dedupe toimii todistetusti<br/>
 
-Seuraava vaihe: LLM-yhteenveto
+## Seuraava vaihe: LLM-yhteenveto
 
 - Koko tiedotetekstin haku link -osoitteen takaa (koska RSS summary ei riitä laadukkaaseen LLM-yhteenvetoon)
 
