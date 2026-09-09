@@ -1,5 +1,6 @@
 import feedparser
 from db import get_connection
+from content_fetcher import fetch_full_text
 
 FEED_URL = "https://www.globenewswire.com/RssFeed/country/Finland/feedTitle/GlobeNewswire%20-%20News%20from%20Finland"
 
@@ -44,7 +45,7 @@ def get_watchlist_isins():
     # Palautetaan dict jossa avain on ISIN ja arvo on yhtiön id
     return {isin: company_id for company_id, isin in rows}
 
-def save_announcement(company_id, data):
+def save_announcement(company_id, data, raw_content):
     """Tallentaa yhden tiedotteen announcements-tauluun. Ohittaa jos jo olemassa
     """
     conn = get_connection()
@@ -52,10 +53,10 @@ def save_announcement(company_id, data):
 
     cur.execute(
     """
-    INSERT INTO announcements (company_id, source, external_id, title, published_at) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (source, external_id) DO NOTHING
+    INSERT INTO announcements (company_id, source, external_id, title, raw_content, published_at) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (source, external_id) DO NOTHING
     RETURNING id;
     """,
-    (company_id, "globenewswire", data["external_id"], data["title"], data["published"]),)
+    (company_id, "globenewswire", data["external_id"], data["title"], raw_content, data["published"]),)
 
     result = cur.fetchone()
     conn.commit()
@@ -82,6 +83,9 @@ if __name__ == "__main__":
         if company_id is None:
             continue # ei watchlistillä, ohitetaan
 
-        was_new = save_announcement(company_id, data)
+        raw_content = fetch_full_text(data["link"])
+
+        was_new = save_announcement(company_id, data, raw_content)
         status = "UUSI" if was_new else "jo olemassa"
-        print(f"[{status}] {data['title']} (ISIN: {data['isin']})")
+        content_status = f"{len(raw_content)} merkkiä" if raw_content else "EI SAATU"
+        print(f"[{status}] {data['title']} (ISIN: {data['isin']}) - teksti: {content_status}")
