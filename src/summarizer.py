@@ -51,3 +51,55 @@ Tiedote:
 """
 
 PROMP_VERSION = "v1"
+
+def summarize_announcement(raw_content):
+    """Lähettää tiedotteen claudelle ja palauttaa jäsennellyn yhteenvedon dictinä. """
+
+    prompt = PROMPT_TEMPLATE.format(content=raw_content)
+
+    response = client.messages.create(model=MODEL, max_tokens=1000, messages=[{"role": "user", "content": prompt}],)
+
+    response_text = response.content[0].text
+
+# Poistetaan mahdolliset markdown-koodilohkomerkinnät (```json ... ```)
+    if response_text.startswith("```"):
+        response_text = response_text.split("\n", 1)[1]  # poista ensimmäinen rivi (```json)
+        response_text = response_text.rsplit("```", 1)[0]  # poista viimeinen ```
+        response_text = response_text.strip()
+
+    return json.loads(response_text)
+
+
+def get_unsummarized_announcement():
+    """Hakee tiedotteet joilla ei ole vielä yhteenvetoa """
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT a.id, a.raw_content FROM announcements a LEFT JOIN summaries s ON s.announcement_id = a.id WHERE s.id IS NULL AND a.raw_content IS NOT NULL;""")
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
+
+
+def save_summaries(announcement_id, summary_data):
+    """ Tallentaa yhteenvedon summaries-tauluun"""
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""INSERT INTO summaries (announcement_id, summary_text, relevance_level, event_type, model_used, prompt_version) VALUES (%s, %s, %s, %s, %s, %s);""", (announcement_id, json.dumps(summary_data, ensure_ascii=False), summary_data["relevance"], summary_data["event_type"], MODEL, PROMP_VERSION,),)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+if __name__ == "__main__":
+    announcements = get_unsummarized_announcement()
+    print(f"Löytyi {len(announcements)} tiedotetta ilman yhteenvetoa\n")
+
+    for announcement_id, raw_content in announcements:
+        print(f"Käsitellään tiedote id={announcement_id}...")
+        summary_data = summarize_announcement(raw_content)
+        save_summaries(announcement_id, summary_data)
+        print(f" -> {summary_data['headline']} ({summary_data['relevance']})")
