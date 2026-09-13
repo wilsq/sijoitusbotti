@@ -59,7 +59,18 @@ def summarize_announcement(raw_content):
 
     response = client.messages.create(model=MODEL, max_tokens=1000, messages=[{"role": "user", "content": prompt}],)
 
-    response_text = response.content[0].text
+    # Etsitään ensimmäinen "text"-tyyppinen lohko, ei oleteta sen olevan content[0]
+    response_text = None
+    for block in response.content:
+        if block.type == "text":
+            response_text = block.text
+            break
+
+    if response_text is None:
+        raise ValueError("Vastauksesta ei löytynyt tekstilohkoa")
+
+    response_text = response_text.strip()
+
 
 # Poistetaan mahdolliset markdown-koodilohkomerkinnät (```json ... ```)
     if response_text.startswith("```"):
