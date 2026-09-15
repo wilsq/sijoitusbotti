@@ -53,10 +53,10 @@ def save_announcement(company_id, data, raw_content):
 
     cur.execute(
     """
-    INSERT INTO announcements (company_id, source, external_id, title, raw_content, published_at) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (source, external_id) DO NOTHING
+    INSERT INTO announcements (company_id, source, external_id, title, link, raw_content, published_at) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (source, external_id) DO NOTHING
     RETURNING id;
     """,
-    (company_id, "globenewswire", data["external_id"], data["title"], raw_content, data["published"]),)
+    (company_id, "globenewswire", data["external_id"], data["title"], data["link"], raw_content, data["published"]),)
 
     result = cur.fetchone()
     conn.commit()

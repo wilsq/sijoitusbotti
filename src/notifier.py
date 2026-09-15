@@ -36,7 +36,7 @@ def format_message(summary_data, link):
     msg += f"{summary_data['summary']}\n\n"
 
     if summary_data.get("context"):
-        msg += f"<i>Tausta:</i> {summary_dat['context']}\n\n"
+        msg += f"<i>Tausta:</i> {summary_data['context']}\n\n"
 
     if summary_data.get("implications"):
         msg += f"<i>Merkitys:</i> {summary_data['implications']}\n\n"
