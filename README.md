@@ -14,3 +14,4 @@
 - Prompti joka pyytää jäsennellyn JSON-vastauksen (relevanssi, tapahtumatyyppi, yhteenveto)
 
 - tallennus summaries -tauluun
+
