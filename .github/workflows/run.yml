@@ -1,9 +1,7 @@
 name: Sijoitusbotti
 
 on:
-  schedule:
-    - cron: "*/30 * * * *"
-  workflow_dispatch: #Sallii myös manuaalisen käynnistyksen Githubin UI:sta
+  workflow_dispatch:
 
 jobs:
   run-bot:
@@ -26,5 +24,4 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-
         run: python src/main.py
