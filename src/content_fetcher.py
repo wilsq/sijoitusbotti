@@ -1,13 +1,23 @@
 import trafilatura
+import requests
+
+HEADERS = {"User-Agent": "Sijoitusbotti wiljami@live.fi"}
 
 def fetch_full_text(url):
     """Hakee ja siivoaa tiedotteen koko tekstin annetusta URL:sta. Palauttaa None jos haku tai jäsennys epäonnistuu"""
 
-    donwloaded = trafilatura.fetch_url(url)
-    if donwloaded is None:
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=15)
+        response.raise_for_status()
+        downloaded = response.text
+    except requests.RequestException:
         return None
 
-    text = trafilatura.extract(donwloaded,include_comments=False, include_tables=True,)
+    text = trafilatura.extract(
+        downloaded,
+        include_comments=False,
+        include_tables=True,
+    )
     return text
 
 if __name__ == "__main__":
