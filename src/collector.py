@@ -51,7 +51,7 @@ def get_watchlist_isins():
     """Hakee kaikkien aktiivisten watchlist-yhtiöiden ISIN-koodit tietokannasta."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, isin FROM companies WHERE is_active = true;")
+    cur.execute("SELECT id, isin FROM companies WHERE is_active = true AND isin IS NOT NULL;")
     rows = cur.fetchall()
     cur.close()
     conn.close()
@@ -87,6 +87,9 @@ def group_by_announcement(entries, watchlist):
     grouped = {}
     for entry in entries:
         data = extract_metadata(entry)
+
+        if data["isin"] is None:
+            continue
 
         company_id = watchlist.get(data["isin"])
         if company_id is None:
