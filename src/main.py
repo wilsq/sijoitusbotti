@@ -31,9 +31,16 @@ def run_collector():
 
 def run_summarizer():
     announcements = get_unsummarized_announcement()
+
+    success_count = 0
     for announcement_id, raw_content in announcements:
-        summary_data = summarize_announcement(raw_content)
-        save_summaries(announcement_id, summary_data)
+        try:
+            summary_data = summarize_announcement(raw_content)
+            save_summaries(announcement_id, summary_data)
+            success_count += 1
+        except Exception as e:
+            print(f"[VIRHE] Tiedote id={announcement_id} epäonnistui: {e}")
+            continue
     print(f"[Yhteenveto] {len(announcements)} yhteenvetoa tehty.")
 
 

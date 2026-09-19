@@ -57,7 +57,7 @@ def summarize_announcement(raw_content):
 
     prompt = PROMPT_TEMPLATE.format(content=raw_content)
 
-    response = client.messages.create(model=MODEL, max_tokens=1000, messages=[{"role": "user", "content": prompt}],)
+    response = client.messages.create(model=MODEL, max_tokens=2000, messages=[{"role": "user", "content": prompt}],)
 
     # Etsitään ensimmäinen "text"-tyyppinen lohko, ei oleteta sen olevan content[0]
     response_text = None
