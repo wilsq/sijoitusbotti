@@ -28,9 +28,7 @@ esiin vain relevantit tapahtumat.
 
 ## Arkkitehtuuri
 
-RSS/API-lähteet → tekstin haku & siivous → LLM-yhteenveto → Telegram
-↓
-PostgreSQL (dedupe, historia)
+RSS/API-lähteet → tekstin haku & siivous → LLM-yhteenveto → Telegram <br>↓PostgreSQL (dedupe, historia)
 
 
 ## Teknisiä haasteita jotka ratkaistiin
