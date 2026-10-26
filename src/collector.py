@@ -1,4 +1,5 @@
 import feedparser
+import requests
 from db import get_connection
 from content_fetcher import fetch_full_text
 
@@ -17,11 +18,25 @@ PREFERRED_LANGUAGE_BY_ISIN_PREFIX = {
 }
 
 
+REQUEST_HEADERS = {
+    "User-Agent": "Sijoitusbotti/1.0",
+    "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+}
+
+
 def fetch_all_feeds():
-    """Hakee kaikki maakohtaiset syötteet ja palauttaa yhdistetyn listan itemeistä."""
+    """
+    Hakee kaikki maakohtaiset syötteet ja palauttaa yhdistetyn listan itemeistä.
+
+    Haku tehdään requests-kirjastolla, jotta virheet (esim. HTTP 403) näkyvät:
+    feedparser.parse(url) nielee ne hiljaa ja palauttaa vain tyhjän listan.
+    """
     all_entries = []
     for country, url in FEED_URLS.items():
-        feed = feedparser.parse(url)
+        response = requests.get(url, headers=REQUEST_HEADERS, timeout=30)
+        response.raise_for_status()
+        feed = feedparser.parse(response.content)
+        print(f"[Syöte - {country}] {len(feed.entries)} itemiä (HTTP {response.status_code})")
         all_entries.extend(feed.entries)
     return all_entries
 

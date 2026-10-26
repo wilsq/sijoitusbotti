@@ -7,6 +7,7 @@ from telegram import Bot
 import os
 import json
 import asyncio
+import html
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
@@ -23,6 +24,7 @@ def run_collector():
     watchlist = get_watchlist_isins()
     entries = fetch_all_feeds()
     announcements = group_by_announcement(entries, watchlist)
+    print(f"[Kerääjä - GlobeNewswire] {len(entries)} itemiä haettu, watchlistiin kuuluvia uniikkeja: {len(announcements)}")
 
     new_count = 0
     for company_id, data in announcements:
@@ -74,6 +76,7 @@ def run_summarizer():
     announcements = get_unsummarized_announcement()
 
     success_count = 0
+    failures = []
     for announcement_id, raw_content in announcements:
         try:
             summary_data = summarize_announcement(raw_content)
@@ -81,9 +84,13 @@ def run_summarizer():
             success_count += 1
         except Exception as e:
             print(f"[VIRHE] Tiedote id={announcement_id} epäonnistui: {e}")
+            failures.append(f"id={announcement_id}: {e}")
             continue
 
     print(f"[Yhteenveto] {success_count}/{len(announcements)} yhteenvetoa tehty.")
+    if failures:
+        # Nostetaan virhe, jotta ajo ei näytä onnistuneelta (esim. vanhentunut API-avain).
+        raise RuntimeError(f"{len(failures)} yhteenvetoa epäonnistui. Ensimmäinen: {failures[0]}")
 
 
 async def run_notifier():
@@ -98,10 +105,55 @@ async def run_notifier():
     print(f"[Lähetys] {len(summaries)} viestiä lähetetty.")
 
 
+ALERT_EVERY_HOURS = 1  # Hälytys lähetetään enintään kerran tässä välissä (ajo pyörii 10 min välein)
+
+
+async def send_alert(text):
+    """Lähettää hälytyksen Telegramiin."""
+    bot = Bot(token=BOT_TOKEN)
+    await send_message(bot, text)
+
+
+def run_step(name, func, errors):
+    """Ajaa yhden vaiheen. Virhe ei kaada muita vaiheita vaan kerätään hälytystä varten."""
+    try:
+        func()
+    except Exception as e:
+        print(f"[VIRHE] {name}: {e}")
+        errors.append(f"{name}: {e}")
+
+
+def alert_if_needed(errors):
+    """
+    Lähettää Telegram-hälytyksen, jos vaiheissa oli virheitä.
+    Ajo pyörii 10 min välein, joten ilman rajoitusta pysyvä vika tuottaisi
+    144 viestiä päivässä. Hälytys lähtee vain ajolla, joka osuu kunkin tunnin
+    ensimmäiselle kymmenelle minuutille.
+    """
+    if not errors:
+        return
+    now = datetime.utcnow()
+    if now.minute >= 10 or now.hour % ALERT_EVERY_HOURS != 0:
+        print("[Hälytys] Virheitä, mutta hälytystä ei lähetetä tällä ajolla (rajoitus).")
+        return
+    text = "⚠️ <b>Sijoitusbotin ajossa oli virheitä</b>\n\n" + "\n".join(
+        html.escape(e)[:300] for e in errors
+    )
+    try:
+        asyncio.run(send_alert(text))
+        print("[Hälytys] Lähetetty.")
+    except Exception as e:
+        print(f"[VIRHE] Hälytyksen lähetys epäonnistui: {e}")
+
+
 if __name__ == "__main__":
     print("--- Ajo alkaa ---")
-    run_collector()
-    run_sec_collector()
-    run_summarizer()
-    asyncio.run(run_notifier())
+    errors = []
+    run_step("GlobeNewswire-keräys", run_collector, errors)
+    run_step("SEC-keräys", run_sec_collector, errors)
+    run_step("Yhteenveto", run_summarizer, errors)
+    run_step("Lähetys", lambda: asyncio.run(run_notifier()), errors)
+    alert_if_needed(errors)
     print("--- Ajo valmis ---")
+    if errors:
+        print(f"[Yhteenveto] {len(errors)} vaihetta epäonnistui.")
