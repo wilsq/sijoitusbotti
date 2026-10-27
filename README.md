@@ -1,19 +1,19 @@
 # Sijoitusbotti
 
-Python-pohjainen tekoälyavusteinen sovellus, joka seuraa pörssiyhtiöiden tiedotteita 
-usealta markkinalta, tiivistää ne LLM:llä ja toimittaa yhteenvedot automaattisesti 
+Python-pohjainen tekoälyavusteinen sovellus, joka seuraa pörssiyhtiöiden tiedotteita
+usealta markkinalta, tiivistää ne LLM:llä ja toimittaa yhteenvedot automaattisesti
 Telegramiin.
 
-**Ongelma jonka ratkaisee:** aktiivisella sijoittajalla ei ole aikaa seurata kaikkia 
-salkkunsa yhtiöiden tiedotteita manuaalisesti — botti suodattaa kohinan ja nostaa 
+**Ongelma jonka ratkaisee:** aktiivisella sijoittajalla ei ole aikaa seurata kaikkia
+salkkunsa yhtiöiden tiedotteita manuaalisesti — botti suodattaa kohinan ja nostaa
 esiin vain relevantit tapahtumat.
 
 ## Ominaisuudet
 
-- Kerää pörssitiedotteita GlobeNewswiren RSS-syötteistä (Suomi, Ruotsi, Norja) ja 
+- Kerää pörssitiedotteita GlobeNewswiren RSS-syötteistä (Suomi, Ruotsi, Norja) ja
   SEC EDGAR -rajapinnasta (USA)
 - Tunnistaa ja poimii monikielisistä tiedotejulkaisuista oikean kieliversion
-- Tiivistää tiedotteet strukturoituun JSON-muotoon Claude-kielimallilla 
+- Tiivistää tiedotteet strukturoituun JSON-muotoon Claude-kielimallilla
   (relevanssiluokittelu, tapahtumatyyppi, vaikutusanalyysi)
 - Lähettää yhteenvedot Telegram-botin kautta, dedupetysti
 - Ajastettu ajo GitHub Actionsin kautta
@@ -30,11 +30,14 @@ esiin vain relevantit tapahtumat.
 
 RSS/API-lähteet → tekstin haku & siivous → LLM-yhteenveto → Telegram <br>↓PostgreSQL (dedupe, historia)
 
-
 ## Teknisiä haasteita jotka ratkaistiin
 
 - Monikielisten RSS-syötteiden yhdistäminen (sama tiedote useana kieliversiona)
 - Luotettava deduplikointi usean datalähteen välillä
 - LLM-vastausten strukturoitu jäsennys ja virhesietoisuus
-- Ajastuksen luotettavuus (natiivi GitHub Actions -cron osoittautui epäluotettavaksi, 
+- Ajastuksen luotettavuus (natiivi GitHub Actions -cron osoittautui epäluotettavaksi,
   korvattiin ulkoisella laukaisijalla)
+
+  ![Esimerkki: Agree Realty kasvatti tulostaan vahvasti Q3:lla](docs/sijoitusbotti1.png)
+
+  ![Esimerkki: Vaisala lanseeraa palvelun datakeskuksille](docs/sijoitusbotti2.png)
