@@ -38,6 +38,10 @@ RSS/API-lähteet → tekstin haku & siivous → LLM-yhteenveto → Telegram <br>
 - Ajastuksen luotettavuus (natiivi GitHub Actions -cron osoittautui epäluotettavaksi,
   korvattiin ulkoisella laukaisijalla)
 
-  ![Esimerkki: Agree Realty kasvatti tulostaan vahvasti Q3:lla](docs/sijoitusbotti1.png)
+## Esimerkkejä botista:
 
-  ![Esimerkki: Vaisala lanseeraa palvelun datakeskuksille](docs/sijoitusbotti2.png)
+Esimerkki: Agree Realty kasvatti tulostaan vahvasti Q3:lla
+![Esimerkki: Agree Realty kasvatti tulostaan vahvasti Q3:lla](docs/sijoitusbotti1.png)
+
+Esimerkki: Vaisala lanseeraa palvelun datakeskuksille
+![Esimerkki: Vaisala lanseeraa palvelun datakeskuksille](docs/sijoitusbotti2.png)
