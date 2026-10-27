@@ -19,9 +19,9 @@ PREFERRED_LANGUAGE_BY_ISIN_PREFIX = {
 
 
 REQUEST_HEADERS = {
-    "User-Agent": "Sijoitusbotti/1.0",
-    "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
-}
+       "User-Agent": "Sijoitusbotti/1.0 (personal non-commercial; contact: viljami.j.viinikainen@gmail.com",
+       "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+   }
 
 
 def fetch_all_feeds():
