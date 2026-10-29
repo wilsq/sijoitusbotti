@@ -9,6 +9,7 @@ load_dotenv()
 client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 MODEL = "claude-sonnet-5"
+MAX_OUTPUT_TOKENS = 6000  # sisältää mahdolliset ajattelulohkot, pitkät tiedotteet tarvitsevat tilaa
 
 PROMPT_TEMPLATE = """Olet sijoitustiedotteiden analyytikko. Tehtäväsi on lukea suomalaisen pörssiyhtiön 
 tiedote ja tuottaa siitä kattava mutta jäsennelty yhteenveto JSON-muodossa. 
@@ -57,28 +58,34 @@ def summarize_announcement(raw_content):
 
     prompt = PROMPT_TEMPLATE.format(content=raw_content)
 
-    response = client.messages.create(model=MODEL, max_tokens=2000, messages=[{"role": "user", "content": prompt}],)
+    response = client.messages.create(model=MODEL, max_tokens=MAX_OUTPUT_TOKENS, messages=[{"role": "user", "content": prompt}],)
 
-    # Etsitään ensimmäinen "text"-tyyppinen lohko, ei oleteta sen olevan content[0]
-    response_text = None
-    for block in response.content:
-        if block.type == "text":
-            response_text = block.text
-            break
+    # Jos vastaus katkesi tokenirajaan, JSON jää kesken. Kerrotaan se selvästi.
+    if response.stop_reason == "max_tokens":
+        raise ValueError(f"Vastaus katkesi max_tokens-rajaan ({MAX_OUTPUT_TOKENS}). Nosta rajaa.")
 
-    if response_text is None:
-        raise ValueError("Vastauksesta ei löytynyt tekstilohkoa")
+    # Yhdistetään kaikki "text"-tyyppiset lohkot (ajattelulohkot ohitetaan),
+    # ei oleteta vastauksen olevan yhdessä lohkossa tai kohdassa content[0].
+    text_parts = [block.text for block in response.content if block.type == "text"]
+    if not text_parts:
+        raise ValueError(f"Vastauksesta ei löytynyt tekstilohkoa (stop_reason={response.stop_reason})")
+    response_text = "".join(text_parts)
 
     response_text = response_text.strip()
 
+    # Luetaan ensimmäinen JSON-objekti ja ohitetaan sen jälkeen tuleva teksti
+    # (esim. selitys tai toinen objekti). Tämä kattaa myös ```json-koodilohkot,
+    # koska haku alkaa ensimmäisestä "{"-merkistä.
+    start = response_text.find("{")
+    if start == -1:
+        raise ValueError(f"Vastauksessa ei ole JSON-objektia. Vastauksen alku: {response_text[:200]!r}")
 
-# Poistetaan mahdolliset markdown-koodilohkomerkinnät (```json ... ```)
-    if response_text.startswith("```"):
-        response_text = response_text.split("\n", 1)[1]  # poista ensimmäinen rivi (```json)
-        response_text = response_text.rsplit("```", 1)[0]  # poista viimeinen ```
-        response_text = response_text.strip()
+    try:
+        summary_data, _ = json.JSONDecoder().raw_decode(response_text[start:])
+    except json.JSONDecodeError as e:
+        raise ValueError(f"JSON-jäsennys epäonnistui ({e}). Vastauksen alku: {response_text[:200]!r}")
 
-    return json.loads(response_text)
+    return summary_data
 
 
 def get_unsummarized_announcement():
